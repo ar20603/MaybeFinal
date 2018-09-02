@@ -24,4 +24,7 @@ urlpatterns = [
     path('check', views.checkChance, name='check'),
     path('endgame', views.endgame, name='endgame'),
     path('finished', views.finished, name='finished'),
+    path('createUsers', views.createUsers, name='createUsers'),
+    path('createMatches', views.createMatches, name='createMatches'),
+    
 ]
