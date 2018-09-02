@@ -13,40 +13,63 @@ def Index(request):
 
         match = Match.objects.filter(id=user.match_id.id).first()
         if request.user==match.user1:
-            return render(request,'main/index.html',{"data":json.loads(match.data),"time1":int(match.time1-time.time()+match.lastTime),"user_id":user.user.id,"time2":match.time2,"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id})
+            myuser = "user1"
+            if match.move == 0:
+                chance = 0
+            elif match.move == 1:
+                chance = 1
+            if chance == 1:
+                return render(request,'main/index.html',{"data":json.loads(match.data),"time1":int(match.time1-time.time()+match.lastTime),"user_id":user.user.id,"time2":match.time2,"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id,"move":match.move,"myuser":myuser,"chance":chance})
+            else:
+                return render(request,'main/index.html',{"data":json.loads(match.data),"time1":match.time1,"user_id":user.user.id,"time2":int(match.time1-time.time()+match.lastTime),"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id,"move":match.move,"myuser":myuser,"chance":chance})
         else:
-            return render(request,'main/index.html',{"data":json.loads(match.data),"time1":int(match.time1-time.time()+match.lastTime),"user_id":user.user.id,"time2":match.time2,"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id})
+            myuser = "user2"
+            if match.move == 1:
+                chance = 0
+            elif match.move == 0:
+                chance = 1
+            if chance ==0:
+                return render(request,'main/index.html',{"data":json.loads(match.data),"time1":int(match.time1-time.time()+match.lastTime),"user_id":user.user.id,"time2":match.time2,"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id,"move":match.move,"myuser":myuser,"chance":chance})
+            else:
+                return render(request,'main/index.html',{"data":json.loads(match.data),"time1":match.time1,"user_id":user.user.id,"time2":int(match.time1-time.time()+match.lastTime),"match_user1":match.user1,"match_user2":match.user2,"match_id":user.match_id.id,"move":match.move,"myuser":myuser,"chance":chance})
 
     else:
         return HttpResponseRedirect('/accounts/login/')
+
+    
 
 def checkChance(request):
     if request.user.is_authenticated:
         match_id = int(request.POST['match_id'])
         match = Match.objects.filter(id=match_id).first()
-        if request.user.id == match.user1:
+        if request.user.id == match.user1.id:
             dic = {}
             if(match.chance1):
                 match.chance1=0
+                match.move=1;
                 match.save()
                 dic['status'] = 1
-                dic['data'] = match.data
-                dic['time1'] = match.time1
+                dic['move'] = 1
+                dic['move'] = match.move
+                dic['data'] = json.loads(match.data)
+                dic['time1'] = int(match.time1-time.time()+match.lastTime)
                 dic['time2'] = match.time2
-                return HttpResponse(dic)
-            return HttpResponse({'status':0})
+                return HttpResponse(json.dumps(dic))
+            return HttpResponse(json.dumps({'status':0}))
             # return HttpResponse(match.chance1)
-        elif request.user.id == match.user2:
+        elif request.user.id == match.user2.id:
             dic = {}
             if(match.chance2):
                 match.chance2=0
+                match.move=0;
                 match.save()
                 dic['status'] = 1
-                dic['data'] = match.data
+                dic['data'] = json.loads(match.data)
+                dic['move'] = match.move
                 dic['time1'] = match.time1
-                dic['time2'] = match.time2
-                return HttpResponse(dic)
-            return HttpResponse({'status':0})
+                dic['time2'] = int(match.time2-time.time()+match.lastTime)
+                return HttpResponse(json.dumps(dic))
+            return HttpResponse(json.dumps({'status':0}))
             # return HttpResponse(match.chance2)
     return HttpResponse("Not Authenticated")
 

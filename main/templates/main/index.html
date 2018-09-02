@@ -48,7 +48,7 @@
 
             </div>
 
-            <button onclick="sendData()">GO</button>
+            <button onclick="check()">GO</button>
 
         </div>
     </body>
@@ -56,6 +56,13 @@
     <script>
     var True = true;
     var None = null;
+
+      var chance = {{chance}};
+      var myuser = "{{myuser}}";
+
+
+
+
         var match_id = {{ match_id }}
         var SEMI_BRD_ORIENT = {{data.smo}} //0-normal, 1- 90 deg rot, 2- 180 deg rot, 3- 270 deg rot
         //SEMI_BRD (semi boards) are  0  1
@@ -288,7 +295,7 @@
         ////////////////////YASH TOPPER///////////////////
 
 
-        var move = 1,   //0-black's move, 1-white's move
+        var move = {{move}},   //0-black's move, 1-white's move
             clickodd = {{data.clickodd}},
             hadRotPrev = {{data.hadRotPrev}}; //Had Rotated Previously, 0-false 1-true
 
@@ -317,7 +324,7 @@
               return -1;
           }
 
-          if(move===1)               //White ka move hai
+          if(myuser==="user1"&&chance===1)               //White ka move hai
           {
 
             if(clickodd === 0 )      //first time click
@@ -406,7 +413,8 @@
 
               if(checkIfCheck(jsonindex,1) ===  1)
               {
-                SCORE[1]+=5;
+                // SCORE[1]+=5;
+                alert("Check!!")
                 calcScore(-1,1);
               }
               drawBoard();
@@ -421,7 +429,7 @@
             }
           }
 
-          else if (move === 0)         //Its black ka move
+          else if (myuser==="user2"&&chance===1)         //Its black ka move
           {
 
             if(clickodd == 0 )      //first time click
@@ -515,7 +523,9 @@
 
                 if(checkIfCheck(jsonindex,0)===1)
                   {
-                    SCORE[0]+=5;
+                    // SCORE[0]+=5;
+                    alert("Check!!")
+
                     calcScore(-1,0);
                   }
                 hadRotPrev[move] = 0;
@@ -610,6 +620,15 @@
         var firstInBoard=[[0,0],[5,0],[0,5],[5,5],[0,10],[5,10]];
 
         function rotate(id) {
+            if(chance===0){
+                printInLog('cb','Cannot be Rotated');
+                return;
+            }
+            if(myuser==="user1"){
+              move = 1;
+            }
+            else move = 0;
+
             if(hadRotPrev[move] === 0 && !((1-move) ? (Math.floor(json.white[2].col/5)===Math.floor(id/2) && Math.floor(json.white[2].row/5)===id%2) : (Math.floor(json.black[2].col/5)===Math.floor(id/2)
                 && Math.floor(json.black[2].row/5)===id%2 ) ))
             {
@@ -632,7 +651,7 @@
                   break;
                 }
 
-                for(i=0;i<4;i++)
+                for(i=0;i<json.white.length;i++)
                 {
                     if(json.white[i].row>=firstInBoard[id][0] && json.white[i].row<firstInBoard[id][0]+5 && json.white[i].col>=firstInBoard[id][1]  && json.white[i].col<firstInBoard[id][1]+5)
                     {
@@ -643,7 +662,7 @@
                     }
                     //console.log(json.white[i].row,json.white[i].col);
                 }
-                for(i=0;i<4;i++)
+                for(i=0;i<json.black.length;i++)
                 {
 
                     if(json.black[i].row>=firstInBoard[id][0] && json.black[i].row<firstInBoard[id][0]+5 && json.black[i].col>=firstInBoard[id][1]  && json.black[i].col<firstInBoard[id][1]+5)
@@ -670,6 +689,7 @@
                 clickodd = 0;
 
                 drawBoard();
+                sendData();
             }
             else printInLog('wm','Board cannot be rotated')
           }
@@ -726,7 +746,7 @@
             return(1);
           }
 
-          if(jsindex===1)      //BISHOP
+          if(jsindex===1 || jsindex===2)      //BISHOP
           {
               if(fbx===prbx && fby===prby)      //no wall found recurse back
               {
@@ -990,14 +1010,14 @@
                 return(0);
               }
 
-              return(WallCheck(prby,prbx,fby-1,fbx+1,jsindex));
+              return(WallCheck(prby+1,prbx-1,fby,fbx,jsindex));
 
             }
 
 
           }
 
-          if(jsindex===2)      //KING
+          if(jsindex===3)      //KING
           {
             if(prbx>fbx && prby == fby)
             {
@@ -1304,7 +1324,7 @@
           }
 
 
-          if(jsindex==3)      //KNIGHT
+          if(jsindex==4 || jsindex==5)      //KNIGHT
           {
             if(Math.abs(fbx-prbx) === 1)
             {
@@ -1380,7 +1400,7 @@
 
           console.log("black");
           var interval = setInterval(function() {
-            if (move === 1) {
+            if ((chance===1&&myuser==="user1")||(chance===0&&myuser==="user2")) {
               WhiteTimer();
               clearInterval(interval);
             }
@@ -1400,7 +1420,7 @@
         function WhiteTimer() {
           console.log("white");
           var interval = setInterval(function() {
-            if (move === 0) {
+            if ((chance===1&&myuser==="user2")||(chance===0&&myuser==="user1")) {
               BlackTimer();
               clearInterval(interval);
             }
@@ -1416,7 +1436,6 @@
             seconds_left_White -= 1/2;
         }, 1000);
         }
-
 
 
         function printInLog(messageType , message){
@@ -1442,20 +1461,51 @@
 
 
 
-
         /*
         var color = 0;
         var color = 1;*/
+        // var xz;
+        var ismyturn = 0;
 
-
-
+        function check(){
+          var checkdata = $.ajax({
+            type: 'POST',
+            url: "/check",
+            data: {'match_id':match_id,'csrfmiddlewaretoken' : '{{csrf_token}}'},
+            success: function(resultData) {
+              var xz = JSON.parse(resultData);
+              if(xz['status']==1){
+                  seconds_left_White = xz['time1'];
+                  seconds_left_Black = xz['time2'];
+                  json = xz['data'].json;
+                  jsonindex = xz['data'].jsonindex;
+                  prevbx = xz['data'].prevbx;
+                  prevby = xz['data'].prevby;
+                  SCORE = xz['data'].score;
+                  SEMI_BRD_ORIENT = xz['data'].smo;
+                  clickodd = xz['data'].clickodd;
+                  hadRotPrev = xz['data'].hadRotPrev;
+                  move = 1-move;
+                  ismyturn = 1;
+                  drawBoard();
+                  chance = 1;
+              }
+             }
+          });
+        }
+        setInterval(function(){
+          if(ismyturn===0)
+            check();
+        },1000);
         function sendData(){
           var saveData = $.ajax({
             type: 'POST',
             url: "/playmove",
-            data: {'match_id':match_id,'data':JSON.stringify({'json':json,'smo' : SEMI_BRD_ORIENT,'clickodd' : clickodd,'hadRotPrev' : hadRotPrev,'prevbx' : prevbx,'prevby' : prevby,'score' : SCORE,'jsonindex' : null,}),'move': move,'csrfmiddlewaretoken' : '{{csrf_token}}'},
+            data: {'match_id':match_id,'data':JSON.stringify({'json':json,'smo' : SEMI_BRD_ORIENT,'clickodd' : clickodd,'hadRotPrev' : hadRotPrev,'prevbx' : prevbx,'prevby' : prevby,'score' : SCORE,'jsonindex' : null,}),'move':1-move,'csrfmiddlewaretoken' : '{{csrf_token}}'},
             success: function(resultData) {
               console.log("Save Complete")
+              ismyturn = 0;
+              chance = 0;
              }
           });
 

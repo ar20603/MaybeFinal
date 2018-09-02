@@ -10,6 +10,7 @@ class Match(models.Model):
     chance2 = models.BooleanField(default=False)
     time1 = models.IntegerField(default=900000)
     time2 = models.IntegerField(default=900000)
+    # state = models.IntegerField(default=-1)
     lastTime = models.BigIntegerField()
     move = models.IntegerField(default=1)
 

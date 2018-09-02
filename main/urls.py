@@ -21,4 +21,5 @@ urlpatterns = [
     path('', views.Index, name='index'),
     path('init/<int:user1>/<int:user2>', views.initMatch, name='init'),
     path('playmove', views.playMove, name='playmove'),
+    path('check', views.checkChance, name='check'),
 ]
