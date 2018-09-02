@@ -9,9 +9,12 @@ import ast
 def Index(request):
 
     if request.user.is_authenticated:
+
         user = UserE.objects.filter(user=request.user).first()
 
-        match = Match.objects.filter(id=user.match_id.id).first()
+        match = Match.objects.filter(id=user.match_id.id).order_by('-id').first()
+        if match.move == 69:
+            return HttpResponseRedirect('/finished')
         if request.user==match.user1:
             myuser = "user1"
             if match.move == 0:
@@ -36,12 +39,55 @@ def Index(request):
     else:
         return HttpResponseRedirect('/accounts/login/')
 
-    
+def finished(request):
+    user = UserE.objects.filter(user=request.user).first()
+    match = Match.objects.filter(id=user.match_id.id).order_by('-id').first()
+    x = json.loads(match.data)['json']
+    sw = 0
+    if x['white'][0]['row']==-1:
+        sw+=40
+    if x['white'][1]['row']==-1:
+        sw+=30
+    if x['white'][2]['row']==-1:
+        sw+=30
+    if x['white'][3]['row']==-1:
+        sw+=70
+    if x['white'][4]['row']==-1:
+        sw+=35
+    if x['white'][5]['row']==-1:
+        sw+=35
+    sb = 0
+    if x['black'][0]['row']==-1:
+        sb+=40
+    if x['black'][1]['row']==-1:
+        sb+=30
+    if x['black'][2]['row']==-1:
+        sb+=30
+    if x['black'][3]['row']==-1:
+        sb+=70
+    if x['black'][4]['row']==-1:
+        sb+=35
+    if x['black'][5]['row']==-1:
+        sb+=35
+
+    return HttpResponse("Game is Over<br>White : " + match.user1.username + " : " +str(sw) +"<br>Black : " + match.user2.username + " : " +str(sb)  )
+
+def endgame(request):
+    if request.user.is_authenticated:
+        match_id = int(request.POST['match_id'])
+        match = Match.objects.filter(id=match_id).first()
+        match.move=69
+        match.save()
+        return HttpResponse(json.dumps({'status':69}))
+    return HttpResponse("Not Authenticated")
+
 
 def checkChance(request):
     if request.user.is_authenticated:
         match_id = int(request.POST['match_id'])
         match = Match.objects.filter(id=match_id).first()
+        if match.move==69:
+            return HttpResponse(json.dumps({'status':69}))
         if request.user.id == match.user1.id:
             dic = {}
             if(match.chance1):
